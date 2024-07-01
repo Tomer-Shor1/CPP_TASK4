@@ -1,51 +1,43 @@
-# **Tree Visualization and Testing**
+# k-ary Tree and Complex Number Operations
 
-This project implements a generic k-ary tree in C++ using templates, provides various traversal methods, and visualizes the tree using the SFML library. Additionally, it includes comprehensive tests using the `doctest` library to ensure the correctness of the tree implementation.
+## Overview
+This project provides an implementation of a generic k-ary tree and a complex number class in C++. The k-ary tree supports various traversal methods and operations, while the complex number class supports basic arithmetic and comparison operations.
 
-## **Table of Contents**
+## Files
+- `tree.hpp`: Header file containing the declaration of the `Tree` class and the `Complex` class.
+- `tree.cpp`: Implementation file containing the definitions of the member functions of the `Tree` class.
 
-- [Introduction](#introduction)
-- [Project Structure](#project-structure)
-- [Detailed Code Explanation](#detailed-code-explanation)
-  - [Tree Class](#tree-class)
-  - [Complex Class](#complex-class)
-  - [Tree Traversal](#tree-traversal)
-  - [Tree Visualization](#tree-visualization)
-- [Usage Instructions](#usage-instructions)
-  - [Compiling the Program](#compiling-the-program)
-  - [Running the Program](#running-the-program)
-  - [Running the Tests](#running-the-tests)
-- [Dependencies](#dependencies)
-- [Conclusion](#conclusion)
+## Tree Class
+The `Tree` class is a template class that represents a k-ary tree. The tree can be instantiated with any data type and allows for various operations such as adding nodes, tree traversal, and printing.
 
-## **Introduction**
+### Main Functions
 
-This project demonstrates the implementation of a generic k-ary tree with support for various data types using C++ templates. It provides functions to add nodes, traverse the tree in multiple ways, and visualize the tree structure using the SFML graphics library. The project also includes a set of tests to verify the functionality and correctness of the tree implementation.
+- **Tree(int k = 2)**: Constructor that initializes an empty tree with a specified maximum number of children per node (default is 2).
+- **~Tree()**: Destructor that recursively deletes all nodes in the tree.
+- **void addRoot(const T &key)**: Adds a root node to the tree. If the tree already has a root, the existing tree is deleted.
+- **void addSubNode(const T &parentKey, const T &childKey)**: Adds a child node to a specified parent node. Throws an error if the parent node is not found or the maximum number of children is exceeded.
+- **int maxDepth(Node *node) const**: Calculates the maximum depth of the tree.
+- **void print() const**: Prints the tree in a visually appealing way.
+- **void myHeap()**: Converts the tree into a min-heap using the keys of the nodes.
 
-## **Project Structure**
+### Iterators
+- **PreOrderIterator**: Supports pre-order traversal of the tree.
+- **PostOrderIterator**: Supports post-order traversal of the tree.
+- **InOrderIterator**: Supports in-order traversal of the tree (more meaningful for binary trees).
+- **BFSIterator**: Supports breadth-first traversal of the tree.
+- **DFSIterator**: Supports depth-first traversal of the tree.
 
-The project consists of the following files:
+## Complex Class
+The `Complex` class represents complex numbers and supports basic arithmetic and comparison operations.
 
-- `main.cpp`: Entry point for the tree visualization application.
-- `tree.hpp`: Header file defining the `Tree` class template and the `Complex` class.
-- `tree_impl.hpp`: Header file containing the implementation of the `Tree` class template.
-- `tree.cpp`: Source file for the `Tree` class template instantiation.
-- `test_tree.cpp`: Test file using `doctest` to verify the functionality of the `Tree` class.
-- `doctest.h`: Header file for the `doctest` library.
-- `DejaVuSans.ttf`: Font file used in the visualization.
+### Main Functions
 
-## **Detailed Code Explanation**
+- **Complex(double r = 0, double i = 0)**: Constructor that initializes a complex number with specified real and imaginary parts (default is 0).
+- **bool operator>(const Complex &other) const**: Compares two complex numbers based on their magnitude.
+- **bool operator==(const Complex &other) const**: Checks if two complex numbers are equal.
+- **friend std::ostream &operator<<(std::ostream &os, const Complex &c)**: Overloads the output stream operator to print complex numbers in the form `a + bi`.
 
-### **Tree Class**
+## Usage
+### Building the Project
+To compile the project, use a C++ compiler like `g++`. To compile, use make and then ./test or ./main
 
-The `Tree` class is a generic k-ary tree implemented using C++ templates. It allows creating trees with any data type as the node key. The tree supports various operations such as adding a root, adding sub-nodes, and different traversal methods.
-
-#### **Template Usage**
-
-Using templates allows the `Tree` class to be flexible and handle different data types. The template is defined as follows:
-
-```cpp
-template <typename T>
-class Tree {
-    ...
-};
