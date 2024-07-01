@@ -1,595 +1,260 @@
+
 /*
     Tomer5469@gmail.com
     ****11541
 */
 
-#ifndef TREE_HPP
-#define TREE_HPP
-
-#include <vector>
-#include <iostream>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.hpp"
+#include "tree.hpp"
 #include <queue>
-#include <cmath>
+#include <string>
 
-// Generic k-ary tree class
-template <typename T>
-class Tree
-{
-public:
-    struct Node
-    {
-        T key;
-        std::vector<Node *> children;
-        Node(const T &key) : key(key) {}
-    };
+// Test case for adding root
+TEST_CASE("Add Root") {
+    Tree<int> tree(3);
+    tree.addRoot(1);
+    CHECK(tree.getRoot()->key == 1);
+}
 
-private:
-    Node *root;
-    int maxChildren;
+// Test case for adding sub-nodes
+TEST_CASE("Add SubNodes") {
+    Tree<int> tree(3);
+    tree.addRoot(1);
+    tree.addSubNode(1, 2);
+    tree.addSubNode(1, 3);
+    tree.addSubNode(1, 4);
 
-    static void preOrder(Node *node, std::vector<Node *> &nodes);
-    static void postOrder(Node *node, std::vector<Node *> &nodes);
-    static void inOrder(Node *node, std::vector<Node *> &nodes);
-    static void bfs(Node *node, std::vector<Node *> &nodes);
-    static void dfs(Node *node, std::vector<Node *> &nodes);
+    auto root = tree.getRoot();
+    REQUIRE(root != nullptr);
+    CHECK(root->key == 1);
+    REQUIRE(root->children.size() == 3);
+    CHECK(root->children[0]->key == 2);
+    CHECK(root->children[1]->key == 3);
+    CHECK(root->children[2]->key == 4);
+}
 
-public:
-    Tree(int k = 2);
-    ~Tree();
+// Test case for exceeding max children
+TEST_CASE("Exceed Max Children") {
+    Tree<int> tree(2);
+    tree.addRoot(1);
+    tree.addSubNode(1, 2);
+    tree.addSubNode(1, 3);
 
-    Node *getRoot() const;
-    void addRoot(const T &key);
-    void addSubNode(const T &parentKey, const T &childKey);
+    CHECK_THROWS_AS(tree.addSubNode(1, 4), std::runtime_error);
+}
 
-    int maxDepth(Node *node) const;
+// Test case for finding non-existing parent
+TEST_CASE("Non-existing Parent") {
+    Tree<int> tree(3);
+    tree.addRoot(1);
+    CHECK_THROWS_AS(tree.addSubNode(2, 3), std::runtime_error);
+}
 
-    class PreOrderIterator
-    {
-    protected:
-        std::vector<Node *> nodes;
-        size_t index;
+// Test case for deep tree structure
+TEST_CASE("Deep Tree Structure") {
+    Tree<int> tree(2);
+    tree.addRoot(1);
+    tree.addSubNode(1, 2);
+    tree.addSubNode(2, 3);
+    tree.addSubNode(3, 4);
+    tree.addSubNode(4, 5);
 
-    public:
-        PreOrderIterator(Node *root);
+    auto root = tree.getRoot();
+    REQUIRE(root != nullptr);
+    CHECK(root->key == 1);
+    CHECK(root->children[0]->key == 2);
+    CHECK(root->children[0]->children[0]->key == 3);
+    CHECK(root->children[0]->children[0]->children[0]->key == 4);
+    CHECK(root->children[0]->children[0]->children[0]->children[0]->key == 5);
+}
 
-        Node *operator*() const;
+// Test case for multiple children
+TEST_CASE("Multiple Children") {
+    Tree<int> tree(3);
+    tree.addRoot(1);
+    tree.addSubNode(1, 2);
+    tree.addSubNode(1, 3);
+    tree.addSubNode(1, 4);
+    tree.addSubNode(2, 5);
+    tree.addSubNode(2, 6);
+    tree.addSubNode(3, 7);
+    tree.addSubNode(3, 8);
+    tree.addSubNode(3, 9);
 
-        PreOrderIterator &operator++();
+    auto root = tree.getRoot();
+    REQUIRE(root != nullptr);
+    CHECK(root->key == 1);
+    CHECK(root->children[0]->key == 2);
+    CHECK(root->children[1]->key == 3);
+    CHECK(root->children[2]->key == 4);
+    CHECK(root->children[0]->children[0]->key == 5);
+    CHECK(root->children[0]->children[1]->key == 6);
+    CHECK(root->children[1]->children[0]->key == 7);
+    CHECK(root->children[1]->children[1]->key == 8);
+    CHECK(root->children[1]->children[2]->key == 9);
+}
 
-        bool operator!=(const PreOrderIterator &other) const;
+// Test case for tree traversal
+TEST_CASE("Tree Traversal") {
+    Tree<int> tree(3);
+    tree.addRoot(1);
+    tree.addSubNode(1, 2);
+    tree.addSubNode(1, 3);
+    tree.addSubNode(1, 4);
+    tree.addSubNode(2, 5);
+    tree.addSubNode(2, 6);
+    tree.addSubNode(3, 7);
 
-        void setToEnd();
-    };
+    auto root = tree.getRoot();
+    REQUIRE(root != nullptr);
+    CHECK(root->key == 1);
 
-    PreOrderIterator beginPreOrder() const;
-    PreOrderIterator endPreOrder() const;
+    std::vector<int> preOrderKeys;
+    for (auto it = tree.beginPreOrder(); it != tree.endPreOrder(); ++it) {
+        preOrderKeys.push_back((*it)->key);
+    }
+    std::vector<int> expectedPreOrder = {1, 2, 5, 6, 3, 7, 4};
+    CHECK(preOrderKeys == expectedPreOrder);
 
-    class PostOrderIterator
-    {
-    protected:
-        std::vector<Node *> nodes;
-        size_t index;
+    std::vector<int> postOrderKeys;
+    for (auto it = tree.beginPostOrder(); it != tree.endPostOrder(); ++it) {
+        postOrderKeys.push_back((*it)->key);
+    }
+    std::vector<int> expectedPostOrder = {5, 6, 2, 7, 3, 4, 1};
+    CHECK(postOrderKeys == expectedPostOrder);
 
-    public:
-        PostOrderIterator(Node *root);
+    std::vector<int> inOrderKeys;
+    for (auto it = tree.beginInOrder(); it != tree.endInOrder(); ++it) {
+        inOrderKeys.push_back((*it)->key);
+    }
+    std::vector<int> expectedInOrder = {5, 2, 6, 1, 7, 3, 4};
+    CHECK(inOrderKeys == expectedInOrder);
 
-        Node *operator*() const;
+    std::vector<int> bfsKeys;
+    for (auto it = tree.beginBfsScan(); it != tree.endBfsScan(); ++it) {
+        bfsKeys.push_back((*it)->key);
+    }
+    std::vector<int> expectedBfs = {1, 2, 3, 4, 5, 6, 7};
+    CHECK(bfsKeys == expectedBfs);
 
-        PostOrderIterator &operator++();
+    std::vector<int> dfsKeys;
+    for (auto it = tree.beginDfsScan(); it != tree.endDfsScan(); ++it) {
+        dfsKeys.push_back((*it)->key);
+    }
+    std::vector<int> expectedDfs = {1, 2, 5, 6, 3, 7, 4};
+    CHECK(dfsKeys == expectedDfs);
+}
 
-        bool operator!=(const PostOrderIterator &other) const;
 
-        void setToEnd();
-    };
 
-    PostOrderIterator beginPostOrder() const;
-    PostOrderIterator endPostOrder() const;
+// Test case for tree with complex numbers
+TEST_CASE("Tree with Complex Numbers") {
+    Tree<Complex> tree(3);
+    tree.addRoot(Complex(1.0, 1.0));
+    tree.addSubNode(Complex(1.0, 1.0), Complex(2.0, 2.0));
+    tree.addSubNode(Complex(1.0, 1.0), Complex(3.0, 3.0));
+    tree.addSubNode(Complex(1.0, 1.0), Complex(4.0, 4.0));
 
-    class InOrderIterator
-    {
-    protected:
-        std::vector<Node *> nodes;
-        size_t index;
+    auto root = tree.getRoot();
+    REQUIRE(root != nullptr);
+    CHECK(root->key == Complex(1.0, 1.0));
+    REQUIRE(root->children.size() == 3);
+    CHECK(root->children[0]->key == Complex(2.0, 2.0));
+    CHECK(root->children[1]->key == Complex(3.0, 3.0));
+    CHECK(root->children[2]->key == Complex(4.0, 4.0));
+}
 
-    public:
-        InOrderIterator(Node *root);
 
-        Node *operator*() const;
 
-        InOrderIterator &operator++();
 
-        bool operator!=(const InOrderIterator &other) const;
+// Test case for handling empty tree
+TEST_CASE("Empty Tree") {
+    Tree<int> tree(3);
+    CHECK(tree.getRoot() == nullptr);
+}
 
-        void setToEnd();
-    };
+// Test case for maxDepth calculation
+TEST_CASE("Max Depth Calculation") {
+    Tree<int> tree(3);
+    tree.addRoot(1);
+    tree.addSubNode(1, 2);
+    tree.addSubNode(1, 3);
+    tree.addSubNode(1, 4);
+    tree.addSubNode(2, 5);
+    tree.addSubNode(2, 6);
+    tree.addSubNode(3, 7);
 
-    InOrderIterator beginInOrder() const;
-    InOrderIterator endInOrder() const;
+    CHECK(tree.maxDepth(tree.getRoot()) == 3);
+}
 
-    class BFSIterator
-    {
-    protected:
-        std::vector<Node *> nodes;
-        size_t index;
-
-    public:
-        BFSIterator(Node *root);
-
-        Node *operator*() const;
-
-        BFSIterator &operator++();
-
-        bool operator!=(const BFSIterator &other) const;
-
-        void setToEnd();
-    };
-
-    BFSIterator beginBfsScan() const;
-    BFSIterator endBfsScan() const;
-
-    class DFSIterator
-    {
-    protected:
-        std::vector<Node *> nodes;
-        size_t index;
-
-    public:
-        DFSIterator(Node *root);
-
-        Node *operator*() const;
-
-        DFSIterator &operator++();
-
-        bool operator!=(const DFSIterator &other) const;
-
-        void setToEnd();
-    };
-
-    DFSIterator beginDfsScan() const;
-    DFSIterator endDfsScan() const;
-
-    void myHeap();
-    void print() const;
-
-private:
-    void deleteTree(Node *node);
-};
-
-// Complex number class
-class Complex
-{
-private:
-    double real;
-    double imag;
-
-public:
-    Complex(double r = 0, double i = 0) : real(r), imag(i) {}
-
-    bool operator>(const Complex &other) const
-    {
-        return std::sqrt(real * real + imag * imag) > std::sqrt(other.real * real + other.imag * other.imag);
+// Test case for large tree
+TEST_CASE("Large Tree") {
+    Tree<int> tree(50);
+    tree.addRoot(1);
+    for (int i = 2; i <= 50; ++i) {
+        tree.addSubNode(1, i);
     }
 
-    bool operator==(const Complex &other) const
-    {
-        return real == other.real && imag == other.imag;
+    auto root = tree.getRoot();
+    REQUIRE(root != nullptr);
+    CHECK(root->key == 1);
+    REQUIRE(root->children.size() == 49);
+}
+
+// Test case for adding duplicate keys
+TEST_CASE("Add Duplicate Keys") {
+    Tree<int> tree(10);
+    tree.addRoot(1);
+    tree.addSubNode(1, 2);
+    tree.addSubNode(1, 2);  // Duplicate key
+
+    auto root = tree.getRoot();
+    REQUIRE(root != nullptr);
+    CHECK(root->key == 1);
+    REQUIRE(root->children.size() == 2);
+    CHECK(root->children[0]->key == 2);
+    CHECK(root->children[1]->key == 2);
+}
+
+// Test case for BFS traversal on large tree
+TEST_CASE("BFS Traversal on Large Tree") {
+    Tree<int> tree(10);
+    tree.addRoot(1);
+    for (int i = 2; i <= 10; ++i) {
+        tree.addSubNode(1, i);
     }
 
-    friend std::ostream &operator<<(std::ostream &os, const Complex &c)
-    {
-        os << c.real << " + " << c.imag << "i";
-        return os;
-    }
-};
-
-// Implementation of Tree class functions
-template<typename T>
-Tree<T>::Tree(int k) : root(nullptr), maxChildren(k) {}
-
-template<typename T>
-Tree<T>::~Tree() {
-    deleteTree(root);
-}
-
-template<typename T>
-void Tree<T>::addRoot(const T& key) {
-    if (root) deleteTree(root);
-    root = new Node(key);
-}
-
-template<typename T>
-void Tree<T>::addSubNode(const T& parentKey, const T& childKey) {
-    if (!root) return;
-
-    std::queue<Node*> queue;
-    queue.push(root);
-
-    while (!queue.empty()) {
-        Node* current = queue.front();
-        queue.pop();
-
-        if (current->key == parentKey) {
-            if (current->children.size() < static_cast<std::size_t>(maxChildren)) {
-                current->children.push_back(new Node(childKey));
-                return;
-            } else {
-                throw std::runtime_error("Maximum children limit reached for this node");
-            }
-        }
-
-        for (Node* child : current->children) {
-            queue.push(child);
-        }
+    std::vector<int> bfsKeys;
+    for (auto it = tree.beginBfsScan(); it != tree.endBfsScan(); ++it) {
+        bfsKeys.push_back((*it)->key);
     }
 
-    throw std::runtime_error("Parent node not found");
-}
-
-// Template function to calculate the maximum depth of the tree
-template<typename T>
-int Tree<T>::maxDepth(Node* node) const {
-    if (!node) return 0;
-    int max_depth = 0;
-    for (auto child : node->children) {
-        max_depth = std::max(max_depth, maxDepth(child));
+    std::vector<int> expectedBfs;
+    for (int i = 1; i <= 10; ++i) {
+        expectedBfs.push_back(i);
     }
-    return 1 + max_depth;
+
+    CHECK(bfsKeys == expectedBfs);
 }
 
-// Print the tree in a visually appealing way
-template<typename T>
-void Tree<T>::print() const {
-    if (!root) return;
-
-    int depth = maxDepth(root);
-
-    std::queue<Node*> nodes;
-    nodes.push(root);
-
-    int level = 0;
-    int count = 1;
-
-    while (!nodes.empty()) {
-        int next_count = 0;
-        std::vector<Node*> level_nodes;
-
-        while (count > 0 && !nodes.empty()) {
-            Node* current = nodes.front();
-            nodes.pop();
-            level_nodes.push_back(current);
-
-            for (auto child : current->children) {
-                nodes.push(child);
-                next_count++;
-            }
-
-            count--;
-        }
-
-        int space_between = std::pow(2, depth - level) - 1;
-        std::string space = std::string(space_between, ' ');
-
-        std::cout << std::string(space_between / 2, ' ');
-        for (auto node : level_nodes) {
-            if (node) {
-                std::cout << node->key << space;
-            } else {
-                std::cout << " " << space;
-            }
-        }
-        std::cout << std::endl;
-
-        count = next_count;
-        level++;
+// Test case for DFS traversal on large tree
+TEST_CASE("DFS Traversal on Large Tree") {
+    Tree<int> tree(10);
+    tree.addRoot(1);
+    for (int i = 2; i <= 10; ++i) {
+        tree.addSubNode(1, i);
     }
-}
 
-// PreOrder iterator implementation
-template<typename T>
-Tree<T>::PreOrderIterator::PreOrderIterator(Node* root) : index(0) {
-    if (root) {
-        Tree::preOrder(root, nodes);
+    std::vector<int> dfsKeys;
+    for (auto it = tree.beginDfsScan(); it != tree.endDfsScan(); ++it) {
+        dfsKeys.push_back((*it)->key);
     }
-}
 
-template<typename T>
-typename Tree<T>::Node* Tree<T>::PreOrderIterator::operator*() const {
-    return nodes[index];
-}
-
-template <typename T>
-typename Tree<T>::Node* Tree<T>::getRoot() const {
-    return root;
-}
-
-template<typename T>
-typename Tree<T>::PreOrderIterator& Tree<T>::PreOrderIterator::operator++() {
-    ++index;
-    return *this;
-}
-
-template<typename T>
-bool Tree<T>::PreOrderIterator::operator!=(const PreOrderIterator& other) const {
-    return index != other.index;
-}
-
-template<typename T>
-void Tree<T>::PreOrderIterator::setToEnd() {
-    index = nodes.size();
-}
-
-template<typename T>
-typename Tree<T>::PreOrderIterator Tree<T>::beginPreOrder() const {
-    return PreOrderIterator(root);
-}
-
-template<typename T>
-typename Tree<T>::PreOrderIterator Tree<T>::endPreOrder() const {
-    PreOrderIterator it(root);
-    it.setToEnd();
-    return it;
-}
-
-// PostOrder iterator implementation
-template<typename T>
-Tree<T>::PostOrderIterator::PostOrderIterator(Node* root) : index(0) {
-    if (root) {
-        Tree::postOrder(root, nodes);
+    std::vector<int> expectedDfs = {1};
+    for (int i = 2; i <= 10; ++i) {
+        expectedDfs.push_back(i);
     }
+
+    CHECK(dfsKeys == expectedDfs);
 }
-
-template<typename T>
-typename Tree<T>::Node* Tree<T>::PostOrderIterator::operator*() const {
-    return nodes[index];
-}
-
-template<typename T>
-typename Tree<T>::PostOrderIterator& Tree<T>::PostOrderIterator::operator++() {
-    ++index;
-    return *this;
-}
-
-template<typename T>
-bool Tree<T>::PostOrderIterator::operator!=(const PostOrderIterator& other) const {
-    return index != other.index;
-}
-
-template<typename T>
-void Tree<T>::PostOrderIterator::setToEnd() {
-    index = nodes.size();
-}
-
-template<typename T>
-typename Tree<T>::PostOrderIterator Tree<T>::beginPostOrder() const {
-    return PostOrderIterator(root);
-}
-
-template<typename T>
-typename Tree<T>::PostOrderIterator Tree<T>::endPostOrder() const {
-    PostOrderIterator it(root);
-    it.setToEnd();
-    return it;
-}
-
-// InOrder iterator implementation
-template<typename T>
-Tree<T>::InOrderIterator::InOrderIterator(Node* root) : index(0) {
-    if (root) {
-        Tree::inOrder(root, nodes);
-    }
-}
-
-template<typename T>
-typename Tree<T>::Node* Tree<T>::InOrderIterator::operator*() const {
-    return nodes[index];
-}
-
-template<typename T>
-typename Tree<T>::InOrderIterator& Tree<T>::InOrderIterator::operator++() {
-    ++index;
-    return *this;
-}
-
-template<typename T>
-bool Tree<T>::InOrderIterator::operator!=(const InOrderIterator& other) const {
-    return index != other.index;
-}
-
-template<typename T>
-void Tree<T>::InOrderIterator::setToEnd() {
-    index = nodes.size();
-}
-
-template<typename T>
-typename Tree<T>::InOrderIterator Tree<T>::beginInOrder() const {
-    return InOrderIterator(root);
-}
-
-template<typename T>
-typename Tree<T>::InOrderIterator Tree<T>::endInOrder() const {
-    InOrderIterator it(root);
-    it.setToEnd();
-    return it;
-}
-
-// BFS iterator implementation
-template<typename T>
-Tree<T>::BFSIterator::BFSIterator(Node* root) : index(0) {
-    if (root) {
-        Tree::bfs(root, nodes);
-    }
-}
-
-template<typename T>
-typename Tree<T>::Node* Tree<T>::BFSIterator::operator*() const {
-    return nodes[index];
-}
-
-template<typename T>
-typename Tree<T>::BFSIterator& Tree<T>::BFSIterator::operator++() {
-    ++index;
-    return *this;
-}
-
-template<typename T>
-bool Tree<T>::BFSIterator::operator!=(const BFSIterator& other) const {
-    return index != other.index;
-}
-
-template<typename T>
-void Tree<T>::BFSIterator::setToEnd() {
-    index = nodes.size();
-}
-
-template<typename T>
-typename Tree<T>::BFSIterator Tree<T>::beginBfsScan() const {
-    return BFSIterator(root);
-}
-
-template<typename T>
-typename Tree<T>::BFSIterator Tree<T>::endBfsScan() const {
-    BFSIterator it(root);
-    it.setToEnd();
-    return it;
-}
-
-// DFS iterator implementation
-template<typename T>
-Tree<T>::DFSIterator::DFSIterator(Node* root) : index(0) {
-    if (root) {
-        Tree::dfs(root, nodes);
-    }
-}
-
-template<typename T>
-typename Tree<T>::Node* Tree<T>::DFSIterator::operator*() const {
-    return nodes[index];
-}
-
-template<typename T>
-typename Tree<T>::DFSIterator& Tree<T>::DFSIterator::operator++() {
-    ++index;
-    return *this;
-}
-
-template<typename T>
-bool Tree<T>::DFSIterator::operator!=(const DFSIterator& other) const {
-    return index != other.index;
-}
-
-template<typename T>
-void Tree<T>::DFSIterator::setToEnd() {
-    index = nodes.size();
-}
-
-template<typename T>
-typename Tree<T>::DFSIterator Tree<T>::beginDfsScan() const {
-    return DFSIterator(root);
-}
-
-template<typename T>
-typename Tree<T>::DFSIterator Tree<T>::endDfsScan() const {
-    DFSIterator it(root);
-    it.setToEnd();
-    return it;
-}
-
-// Convert a binary tree to a min-heap
-template<typename T>
-void Tree<T>::myHeap() {
-    if (!root) return;
-
-    std::vector<Node*> nodes;
-    Tree::bfs(root, nodes);
-
-    std::make_heap(nodes.begin(), nodes.end(), [](Node* a, Node* b) {
-        return a->key > b->key;
-    });
-
-    root = nodes[0];
-    std::queue<Node*> queue;
-    queue.push(root);
-
-    size_t index = 1;
-    while (!queue.empty() && index < nodes.size()) {
-        Node* current = queue.front();
-        queue.pop();
-
-        current->children.clear();
-        for (int i = 0; i < maxChildren && index < nodes.size(); ++i, ++index) {
-            current->children.push_back(nodes[index]);
-            queue.push(nodes[index]);
-        }
-    }
-}
-
-template<typename T>
-void Tree<T>::deleteTree(Node* node) {
-    if (!node) return;
-    for (Node* child : node->children) {
-        deleteTree(child);
-    }
-    delete node;
-}
-
-// Utility functions for iterators
-template<typename T>
-void Tree<T>::preOrder(Node* node, std::vector<Node*>& nodes) {
-    if (!node) return;
-    nodes.push_back(node);
-    for (Node* child : node->children) {
-        preOrder(child, nodes);
-    }
-}
-
-template<typename T>
-void Tree<T>::postOrder(Node* node, std::vector<Node*>& nodes) {
-    if (!node) return;
-    for (Node* child : node->children) {
-        postOrder(child, nodes);
-    }
-    nodes.push_back(node);
-}
-
-template<typename T>
-void Tree<T>::inOrder(Node* node, std::vector<Node*>& nodes) {
-    if (!node) return;
-    if (!node->children.empty()) {
-        inOrder(node->children[0], nodes);
-    }
-    nodes.push_back(node);
-    for (size_t i = 1; i < node->children.size(); ++i) {
-        inOrder(node->children[i], nodes);
-    }
-}
-
-template<typename T>
-void Tree<T>::bfs(Node* node, std::vector<Node*>& nodes) {
-    if (!node) return;
-    std::queue<Node*> queue;
-    queue.push(node);
-    while (!queue.empty()) {
-        Node* current = queue.front();
-        queue.pop();
-        nodes.push_back(current);
-        for (Node* child : current->children) {
-            queue.push(child);
-        }
-    }
-}
-
-template<typename T>
-void Tree<T>::dfs(Node* node, std::vector<Node*>& nodes) {
-    if (!node) return;
-    nodes.push_back(node);
-    for (Node* child : node->children) {
-        dfs(child, nodes);
-    }
-}
-
-// Explicit instantiations for the types we intend to use
-template class Tree<int>;
-template class Tree<double>;
-template class Tree<Complex>;
-
-#endif // TREE_HPP
